@@ -5,7 +5,7 @@ import cv2
 import os
 
 
-class VOCDataset:
+class ARGDataset:
 
     def __init__(self, root, transform=None, target_transform=None, is_test=False, keep_difficult=False, label_file=None):
         """Dataset for VOC data.
@@ -17,10 +17,10 @@ class VOCDataset:
         self.transform = transform
         self.target_transform = target_transform
         if is_test:
-            image_sets_file = self.root + "/ImageSets/Main/test.txt"
+            image_sets_file = self.root + "/ImageSets/Main/person_test.txt"
         else:
-            image_sets_file = self.root + "/ImageSets/Main/trainval.txt"
-        self.ids = VOCDataset._read_image_ids(image_sets_file)
+            image_sets_file = self.root + "/ImageSets/Main/person_train.txt"
+        self.ids = ARGDataset._read_image_ids(image_sets_file)
         self.keep_difficult = keep_difficult
 
         # if the labels file exists, read in the class names
@@ -44,11 +44,7 @@ class VOCDataset:
         else:
             logging.info("No labels file, using default VOC classes.")
             self.class_names = ('BACKGROUND',
-            'aeroplane', 'bicycle', 'bird', 'boat',
-            'bottle', 'bus', 'car', 'cat', 'chair',
-            'cow', 'diningtable', 'dog', 'horse',
-            'motorbike', 'person', 'pottedplant',
-            'sheep', 'sofa', 'train', 'tvmonitor')
+            'person')
 
 
         self.class_dict = {class_name: i for i, class_name in enumerate(self.class_names)}
@@ -99,17 +95,30 @@ class VOCDataset:
             # we're only concerned with clases in our list
             if class_name in self.class_dict:
                 bbox = object.find('bndbox')
+                if bbox is not None:
+                    # VOC dataset format follows Matlab, in which indexes start from 0
+                    x1 = float(bbox.find('xmin').text) - 1
+                    y1 = float(bbox.find('ymin').text) - 1
+                    x2 = float(bbox.find('xmax').text) - 1
+                    y2 = float(bbox.find('ymax').text) - 1
+                    boxes.append([x1, y1, x2, y2])
 
-                # VOC dataset format follows Matlab, in which indexes start from 0
-                x1 = float(bbox.find('xmin').text) - 1
-                y1 = float(bbox.find('ymin').text) - 1
-                x2 = float(bbox.find('xmax').text) - 1
-                y2 = float(bbox.find('ymax').text) - 1
-                boxes.append([x1, y1, x2, y2])
-
-                labels.append(self.class_dict[class_name])
-                is_difficult_str = object.find('difficult').text
-                is_difficult.append(int(is_difficult_str) if is_difficult_str else 0)
+                    labels.append(self.class_dict[class_name])
+                    is_difficult_str = object.find('difficult').text
+                    is_difficult.append(int(is_difficult_str) if is_difficult_str else 0)
+                else:   # For LabelMe tool
+                    polygons = obj.find('polygon')
+                    x = []
+                    y = []
+                    bndbox = []
+                    for polygon in polygons.iter('pt'):
+                        # scale height or width
+                        x.append(int(polygon.find('x').text) / width)
+                        y.append(int(polygon.find('y').text) / height)
+                    boxes.append([min[x], min(y), max(x), max(y)])
+                    labels.append(self.class_dict[class_name])
+                    is_difficult_str = object.find('difficult').text
+                    is_difficult.append(int(is_difficult_str) if is_difficult_str else 0)
 
         return (np.array(boxes, dtype=np.float32),
                 np.array(labels, dtype=np.int64),

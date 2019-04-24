@@ -64,10 +64,11 @@ while True:
     timer.start()
     boxes, labels, probs = predictor.predict(image, 10, 0.4)
     interval = timer.end()
-    print('Time: {:.2f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
+    print(1./interval)
+    # print('Time: {:.2f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
     for i in range(boxes.size(0)):
         box = boxes[i, :]
-        label = f"{class_names[labels[i]]}: {probs[i]:.2f}"
+        label = "{}: {:.2f}".format(class_names[labels[i]], probs[i])
         cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), (255, 255, 0), 4)
 
         cv2.putText(orig_image, label,

@@ -9,7 +9,7 @@ SSDBoxSizes = collections.namedtuple('SSDBoxSizes', ['min', 'max'])
 SSDSpec = collections.namedtuple('SSDSpec', ['feature_map_size', 'shrinkage', 'box_sizes', 'aspect_ratios'])
 
 
-def generate_ssd_priors(specs: List[SSDSpec], image_size, clamp=True) -> torch.Tensor:
+def generate_ssd_priors(specs, image_size, clamp=True):
     """Generate SSD Prior Boxes.
 
     It returns the center, height and width of the priors. The values are relative to the image size
@@ -98,6 +98,7 @@ def convert_locations_to_boxes(locations, priors, center_variance,
             are relative to the image size.
     """
     # priors can have one dimension less.
+    locations = locations.cuda()
     if priors.dim() + 1 == locations.dim():
         priors = priors.unsqueeze(0)
     return torch.cat([
@@ -116,7 +117,7 @@ def convert_boxes_to_locations(center_form_boxes, center_form_priors, center_var
     ], dim=center_form_boxes.dim() - 1)
 
 
-def area_of(left_top, right_bottom) -> torch.Tensor:
+def area_of(left_top, right_bottom):
     """Compute the areas of rectangles given two corners.
 
     Args:
