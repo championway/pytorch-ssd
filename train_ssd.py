@@ -48,7 +48,7 @@ parser.add_argument('--mb2_width_mult', default=1.0, type=float,
                     help='Width Multiplifier for MobilenetV2')
 
 # Params for SGD
-parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float,
                     help='Momentum value for optim')
@@ -88,7 +88,7 @@ parser.add_argument('--num_epochs', default=200, type=int,
                     help='the number epochs')
 parser.add_argument('--num_workers', default=4, type=int,
                     help='Number of workers used in dataloading')
-parser.add_argument('--validation_epochs', default=1, type=int,
+parser.add_argument('--validation_epochs', default=5, type=int,
                     help='the number epochs')
 parser.add_argument('--debug_steps', default=50, type=int,
                     help='Set the debug log output frequency.')
@@ -344,4 +344,4 @@ if __name__ == '__main__':
             )
             model_path = os.path.join(args.save_model_folder, "{}-Epoch-{}-Loss-{:.4f}.pth".format(args.net, epoch, val_loss))
             net.save(model_path)
-            logging.info("Saved model {}".format(model_path))
+            logging.info("Saved model to  {}".format(model_path))

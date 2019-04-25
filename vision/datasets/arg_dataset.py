@@ -17,9 +17,9 @@ class ARGDataset:
         self.transform = transform
         self.target_transform = target_transform
         if is_test:
-            image_sets_file = self.root + "/ImageSets/Main/person_test.txt"
+            image_sets_file = self.root + "/ImageSets/Main/palm_test.txt"
         else:
-            image_sets_file = self.root + "/ImageSets/Main/person_train.txt"
+            image_sets_file = self.root + "/ImageSets/Main/palm_train.txt"
         self.ids = ARGDataset._read_image_ids(image_sets_file)
         self.keep_difficult = keep_difficult
 
@@ -44,7 +44,7 @@ class ARGDataset:
         else:
             logging.info("No labels file, using default VOC classes.")
             self.class_names = ('BACKGROUND',
-            'person')
+            'person', 'palm')
 
 
         self.class_dict = {class_name: i for i, class_name in enumerate(self.class_names)}
@@ -102,23 +102,22 @@ class ARGDataset:
                     x2 = float(bbox.find('xmax').text) - 1
                     y2 = float(bbox.find('ymax').text) - 1
                     boxes.append([x1, y1, x2, y2])
-
+                    # print('====', [x1, y1, x2, y2])
                     labels.append(self.class_dict[class_name])
                     is_difficult_str = object.find('difficult').text
                     is_difficult.append(int(is_difficult_str) if is_difficult_str else 0)
                 else:   # For LabelMe tool
-                    polygons = obj.find('polygon')
+                    polygons = object.find('polygon')
                     x = []
                     y = []
-                    bndbox = []
                     for polygon in polygons.iter('pt'):
                         # scale height or width
-                        x.append(int(polygon.find('x').text) / width)
-                        y.append(int(polygon.find('y').text) / height)
-                    boxes.append([min[x], min(y), max(x), max(y)])
+                        x.append(int(polygon.find('x').text) - 1.0)
+                        y.append(int(polygon.find('y').text) - 1.0)
+                    boxes.append([min(x), min(y), max(x), max(y)])
+                    # print('@@@@', [min(x), min(y), max(x), max(y)])
                     labels.append(self.class_dict[class_name])
-                    is_difficult_str = object.find('difficult').text
-                    is_difficult.append(int(is_difficult_str) if is_difficult_str else 0)
+                    is_difficult.append(0)
 
         return (np.array(boxes, dtype=np.float32),
                 np.array(labels, dtype=np.int64),
